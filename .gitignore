@@ -33,3 +33,6 @@ build/
 bin/
 out/
 logs/
+
+# vscode
+.vscode/

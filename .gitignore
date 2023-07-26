@@ -1,0 +1,35 @@
+# IntelliJ IDEA
+.idea/
+
+# Maven
+target/
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# Compiled files
+*.class
+
+# Log files
+*.log
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Eclipse-specific
+.classpath
+.project
+.settings/
+
+# Mac-specific
+.DS_Store
+
+# Gradle-specific
+.gradle/
+build/
+
+# Misc
+bin/
+out/
+logs/

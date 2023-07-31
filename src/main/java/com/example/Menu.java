@@ -47,8 +47,10 @@ public class Menu {
         while (!optionChosen) {
             try {
                 System.out.println("\nIngresa la opcion que desees:");
+                System.out.println("1. Mostrar tus contactos y su estado.");
                 System.out.println("10. Cerrar sesion.");
                 System.out.println("11. Eliminar cuenta.");
+                System.out.println("12. Salir");
                 System.out.print("> ");
                 option = Integer.parseInt(scanner.nextLine());
                 optionChosen = true;
@@ -58,5 +60,9 @@ public class Menu {
         }
 
         return option;
+    }
+
+    public void showRoster(String roster) {
+        System.out.println(roster);
     }
 }

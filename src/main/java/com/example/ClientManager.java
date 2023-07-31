@@ -32,6 +32,8 @@ public class ClientManager {
 
     private void handleAction(int option) {
         switch (option) {
+            case 1:
+                showRoster();
             case 10:
                 logout();
                 break;
@@ -39,6 +41,10 @@ public class ClientManager {
                 deleteAccount();
                 break;
         }
+    }
+
+    private void showRoster() {
+        menu.showRoster(connection.getRoster());
     }
 
     private void logout() {

@@ -2,9 +2,16 @@ package com.example;
 
 import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.ConnectionConfiguration;
+import org.jivesoftware.smack.packet.Presence;
+import org.jivesoftware.smack.roster.Roster;
+import org.jivesoftware.smack.roster.RosterEntry;
+import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.iqregister.AccountManager;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 
 public class Connection {
@@ -79,6 +86,34 @@ public class Connection {
         } catch (Exception e) {
             System.out.println("No pudimos eliminar tu cuenta. Lo sentimos :(");
             return -1;
+        }
+    }
+
+    public String getRoster() {
+        try {
+            Roster roster = Roster.getInstanceFor(connection);
+            roster.reload();
+            String result = "";
+
+            // Print the list of contacts and their groups
+            result += "Contactos:\n";
+            for (RosterEntry entry : roster.getEntries()) {
+                result += " - " + entry.getName() + " (" + entry.getUser() + ")\n";
+                BareJid userJid = JidCreate.bareFrom(entry.getUser());
+                Presence presence = roster.getPresence(userJid);
+                if (presence.isAvailable()) {
+                    result += "   * Status: Online\n";
+                } else {
+                    result += "   * Status: Offline\n";
+                }
+                for (RosterGroup group : entry.getGroups()) {
+                    result += "   - Group: " + group.getName() + "\n";
+                }
+            }
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
         }
     }
 

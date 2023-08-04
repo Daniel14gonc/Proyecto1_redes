@@ -48,6 +48,7 @@ public class Menu {
             try {
                 System.out.println("\nIngresa la opcion que desees:");
                 System.out.println("1. Mostrar tus contactos y su estado.");
+                System.out.println("6. Crea o modifica tu mensaje de presencia.");
                 System.out.println("10. Cerrar sesion.");
                 System.out.println("11. Eliminar cuenta.");
                 System.out.println("12. Salir");
@@ -64,5 +65,12 @@ public class Menu {
 
     public void showRoster(String roster) {
         System.out.println(roster);
+    }
+
+    public String getStatusMessage() {
+        System.out.println("Ingresa tu nuevo mensaje de presencia");
+        System.out.print("> ");
+        String message = scanner.nextLine();
+        return message;
     }
 }

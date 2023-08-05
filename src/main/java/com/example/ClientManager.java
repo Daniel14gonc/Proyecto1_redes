@@ -38,6 +38,15 @@ public class ClientManager {
             case 1:
                 showRoster();
                 break;
+            case 2:
+                addUser();
+                break;
+            case 3:
+                showContactDetails();
+                break;
+            case 4:
+                chatWithUser();
+                break;
             case 6:
                 handleStatusMessageChange();
                 break;
@@ -83,9 +92,25 @@ public class ClientManager {
         }
     }
 
+    private void chatWithUser() {
+        String user = menu.getUserToChat();
+        connection.chatWithUser(user);
+
+    }
+
     private void handleStatusMessageChange() {
-        String message = menu.getStatusMessage();
-        connection.setStatusMessage(message);
+        String[] data = menu.getStatusMessage();
+        connection.setStatusMessage(data);
+    }
+
+    private void addUser() {
+        String user = menu.getUserToSubscribe();
+        connection.sendSubscription(user);
+    }
+
+    private void showContactDetails() {
+        String contact = menu.getContact();
+
     }
 
     private void showRoster() {

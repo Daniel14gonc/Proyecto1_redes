@@ -48,6 +48,9 @@ public class Menu {
             try {
                 System.out.println("\nIngresa la opcion que desees:");
                 System.out.println("1. Mostrar tus contactos y su estado.");
+                System.out.println("2. Agregar usuario a contactos.");
+                System.out.println("3. Mostrar detalles de contacto de usuario.");
+                System.out.println("4. Habla con un usuario.");
                 System.out.println("6. Crea o modifica tu mensaje de presencia.");
                 System.out.println("10. Cerrar sesion.");
                 System.out.println("11. Eliminar cuenta.");
@@ -67,10 +70,62 @@ public class Menu {
         System.out.println(roster);
     }
 
-    public String getStatusMessage() {
-        System.out.println("Ingresa tu nuevo mensaje de presencia");
+    public String[] getStatusMessage() {
+        boolean finished = false;
+        String message = null;
+        String type = null;
+        String mode = null;
+        while (!finished) {
+            try {
+                System.out.println("Ingresa tu nuevo tipo de presencia (escribe el número de opción).");
+                System.out.println("1. Disponible");
+                System.out.println("2. No disponible");
+                System.out.print("> ");
+                type = scanner.nextLine();
+                int convert = Integer.parseInt(type);
+                System.out.println("Ingresa el modo de tu status (escribe el número de opción).");
+                System.out.println("1. Available");
+                System.out.println("2. Away");
+                System.out.println("3. Chat");
+                System.out.println("4. Extended away");
+                System.out.println("5. Do not disturb");
+                System.out.print("> ");
+                mode = scanner.nextLine();
+                convert = Integer.parseInt(mode);
+                System.out.println("Ingresa tu nuevo mensaje de presencia");
+                System.out.print("> ");
+                message = scanner.nextLine();
+                finished = true;
+            } catch (Exception e) {
+                System.out.println("Ingresa correctamente las opciones.  ¡Problemos de nuevo!\n");
+            }
+
+        }
+        String[] result = new String[3];
+        result[0] = message;
+        result[1] = type;
+        result[2] = mode;
+        return result;
+    }
+
+    public String getUserToChat() {
+        System.out.println("Ingresa el usuario con el que quieres hablar (debes agregar el dominio, por ejemplo @alumchat.xyz).");
         System.out.print("> ");
-        String message = scanner.nextLine();
-        return message;
+        String user = scanner.nextLine();
+        return user;
+    }
+
+    public String getUserToSubscribe() {
+        System.out.println("Ingresa el usuario que quieres agregar a tus contactos (debes agregar el dominio, por ejemplo @alumchat.xyz).");
+        System.out.print("> ");
+        String user = scanner.nextLine();
+        return user;
+    }
+
+    public String getContact() {
+        System.out.println("Ingresa el usuario del contacto del que deseas ver los detalles.");
+        System.out.print("> ");
+        String contact = scanner.nextLine();
+        return contact;
     }
 }

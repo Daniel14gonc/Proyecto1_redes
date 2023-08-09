@@ -17,6 +17,7 @@ import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
+import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.iqregister.AccountManager;
@@ -29,6 +30,7 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
@@ -103,7 +105,7 @@ public class Connection {
 
     private void removeChatListener() {
         chatManager.removeIncomingListener(chatListener);
-        chatManager = null;
+        // chatManager = null;
     }
 
     private void resetChatManager() {
@@ -126,7 +128,7 @@ public class Connection {
             System.out.println("Registro exitoso e inicio de sesion exitosos.");
             return 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             System.out.println("Credenciales invalidas. No te pudimos registrar.");
             return -1;
         }
@@ -153,6 +155,37 @@ public class Connection {
             connection.login(username, password);
             sendAvailableStanza();
             roster = Roster.getInstanceFor(connection);
+            roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
+            /*roster.addRosterListener(new RosterListener() {
+
+                @Override
+                public void entriesAdded(Collection<Jid> addresses) {
+                    for (Jid address : addresses) {
+                        // Aceptar automáticamente la solicitud de amistad
+                        try {
+                            roster.createEntry(address.asBareJid(), null, null);
+                            System.out.println("Solicitud de amistad aceptada de: " + address);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+                @Override
+                public void entriesUpdated(Collection<Jid> addresses) {
+
+                }
+
+                @Override
+                public void entriesDeleted(Collection<Jid> addresses) {
+
+                }
+
+                @Override
+                public void presenceChanged(Presence presence) {
+
+                }
+            });*/
             roster.reloadAndWait();
             System.out.println("Inicio de sesion exitoso.");
             resetChatManager();
@@ -165,26 +198,29 @@ public class Connection {
     }
 
     public int logout() {
-        connection.disconnect();
         try {
             Thread.sleep(150);
         } catch (Exception e) {
+            System.out.println("AcA?");
             e.printStackTrace();
         }
         removeChatListener();
         messages.clear();
+        connection.disconnect();
         System.out.println("Se ha cerrado sesion exitosamente.\n");
         return 0;
     }
 
     public int deleteAccount() {
         try {
-            logout();
+
+            messages.clear();
             AccountManager accountManager = AccountManager.getInstance(connection);
             accountManager.deleteAccount();
             System.out.println("Se elimino cuenta exitosamente.");
             return 0;
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("No pudimos eliminar tu cuenta. Lo sentimos :(");
             return -1;
         }
@@ -202,6 +238,31 @@ public class Connection {
             System.out.println("No pudimos enviar tu solicitud de suscripción. Prueba de nuevo.");
         }
 
+    }
+
+    public void getUserDetails(String user) {
+        try {
+            Jid jid = JidCreate.from(user);
+            System.out.println(jid);
+
+            RosterEntry entry = roster.getEntry(jid.asBareJid());
+            if (entry != null) {
+                System.out.println("User's JID: " + entry.getJid());
+
+                Presence presence = roster.getPresence(jid.asBareJid());
+                if (presence.isAvailable()) {
+                    System.out.println("Status: Online");
+                } else {
+                    System.out.println("Status: Offline");
+                }
+                System.out.println("Presence mode: " + presence.getMode());
+                System.out.println("Presence type: " + presence.getType());
+            } else {
+                System.out.println("Usuario no presente en roster.");
+            }
+        } catch (Exception e) {
+            System.out.println("No pudimos obtener el usuario :(");
+        }
     }
 
     public String getRoster() {

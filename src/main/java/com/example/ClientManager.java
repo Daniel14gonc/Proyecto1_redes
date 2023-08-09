@@ -110,7 +110,7 @@ public class ClientManager {
 
     private void showContactDetails() {
         String contact = menu.getContact();
-
+        connection.getUserDetails(contact);
     }
 
     private void showRoster() {
@@ -140,6 +140,7 @@ public class ClientManager {
 
     private void deleteAccount() {
         connection.deleteAccount();
+        loggedIn = false;
     }
 
     private void reset_state() {

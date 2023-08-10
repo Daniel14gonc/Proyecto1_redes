@@ -21,13 +21,18 @@ import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.iqregister.AccountManager;
+import org.jivesoftware.smackx.muc.MultiUserChat;
+import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.vcardtemp.VCardManager;
 import org.jivesoftware.smackx.vcardtemp.packet.VCard;
+import org.jivesoftware.smackx.xdata.form.Form;
+import org.jivesoftware.smackx.xdata.packet.DataForm;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
+import org.jxmpp.jid.parts.Resourcepart;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,10 +56,9 @@ public class Connection {
     private static Semaphore semaphore = new Semaphore(1);
     private ChatManager chatManager;
     private Scanner scanner;
-
     public static String currentChatUser;
-
     private ChatMessageListener chatListener;
+    private MultiUserChatManager manager;
 
     public Connection() {
         messages = new HashMap<String, ArrayList<String>>();
@@ -406,6 +410,43 @@ public class Connection {
             }
         }
         System.out.println(screenCleaner);
+    }
+
+    public void createGroupChat(String chatRoomName, String nickname) {
+        try {
+            manager = MultiUserChatManager.getInstanceFor(connection);
+            String roomName = chatRoomName + "@alumchat.xyz";
+            EntityBareJid roomJid = JidCreate.entityBareFrom(roomName);
+            MultiUserChat muc = manager.getMultiUserChat(roomJid);
+            Resourcepart resource = Resourcepart.from(nickname);
+            muc.create(resource).makeInstant();
+            muc.addMessageListener((from) -> {
+                String sender = from.getElementName().toString();
+                String body = from.getBody();
+                System.out.println("Mensaje en sala: " + roomName);
+                System.out.println("Remitente: " + sender);
+                System.out.println("Mensaje: " + body);
+            });
+            System.out.println("Hemos creado el grupo con éxito.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // System.out.println("Algo salió mal. No pudimos crear el grupo :(");
+        }
+    }
+
+    public void joinGroupChat(String chatRoomName, String nickname) {
+        try {
+            manager = MultiUserChatManager.getInstanceFor(connection);
+            String roomName = chatRoomName + "@alumchat.xyz";
+            EntityBareJid roomJid = JidCreate.entityBareFrom(roomName);
+            MultiUserChat muc = manager.getMultiUserChat(roomJid);
+            Resourcepart resource = Resourcepart.from(nickname);
+            muc.join(resource);
+            System.out.println("Te has unido a la sala con éxito.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // System.out.println("Algo salió mal. No pudimos crear el grupo :(");
+        }
     }
 
     private static class ChatMessageListener implements IncomingChatMessageListener {

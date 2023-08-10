@@ -47,6 +47,9 @@ public class ClientManager {
             case 4:
                 chatWithUser();
                 break;
+            case 5:
+                handleGroupChat();
+                break;
             case 6:
                 handleStatusMessageChange();
                 break;
@@ -96,6 +99,27 @@ public class ClientManager {
         String user = menu.getUserToChat();
         connection.chatWithUser(user);
 
+    }
+
+    private void handleGroupChat() {
+        int option = menu.groupChat();
+        if (option == 1) {
+            createGroupChat();
+        } else if (option == 2) {
+            joinGroupChat();
+        } else {
+            // chatInGroup();
+        }
+    }
+
+    private void createGroupChat() {
+        ArrayList<String> data = menu.getGroupChatInfoCreation(1);
+        connection.createGroupChat(data.get(0), data.get(1));
+    }
+
+    private void joinGroupChat() {
+        ArrayList<String> data = menu.getGroupChatInfoCreation(2);
+        connection.joinGroupChat(data.get(0), data.get(1));
     }
 
     private void handleStatusMessageChange() {

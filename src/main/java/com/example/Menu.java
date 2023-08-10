@@ -51,6 +51,7 @@ public class Menu {
                 System.out.println("2. Agregar usuario a contactos.");
                 System.out.println("3. Mostrar detalles de contacto de usuario.");
                 System.out.println("4. Habla con un usuario.");
+                System.out.println("5. Chat grupal.");
                 System.out.println("6. Crea o modifica tu mensaje de presencia.");
                 System.out.println("10. Cerrar sesion.");
                 System.out.println("11. Eliminar cuenta.");
@@ -127,5 +128,42 @@ public class Menu {
         System.out.print("> ");
         String contact = scanner.nextLine();
         return contact;
+    }
+
+    public int groupChat() {
+        System.out.println("Bienvenido al chat grupal de XMPP. Ingresa la opcion que deseas");
+        System.out.println("1. Crear chat grupal.");
+        System.out.println("2. Unirte a un chat grupal.");
+        System.out.println("3. Hablar en un chat grupal.");
+        System.out.print("> ");
+        String contact = scanner.nextLine();
+        return Integer.parseInt(contact);
+    }
+
+    public ArrayList<String> getGroupChatInfoCreation(int option) {
+        boolean infoWellSubmitted = false;
+        String groupName = null;
+        String nickname = null;
+        while (!infoWellSubmitted) {
+            if (option == 1) {
+                System.out.println("Ingresa el nombre del grupo que quieres crear");
+            } else {
+                System.out.println("Ingresa el nombre del grupo al que te quieres unir.");
+            }
+            System.out.print("> ");
+            groupName = scanner.nextLine();
+            System.out.println("Ingresa el apodo que quieres tener el el grupo.");
+            System.out.print("> ");
+            nickname = scanner.nextLine();
+            if (groupName.isEmpty() || nickname.isEmpty()) {
+                System.out.println("Ingresa correctamente los datos. Probemos de nuevo.\n");
+            } else {
+                infoWellSubmitted = true;
+            }
+        }
+        ArrayList<String> data = new ArrayList<String>();
+        data.add(groupName);
+        data.add(nickname);
+        return data;
     }
 }

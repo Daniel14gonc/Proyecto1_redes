@@ -131,13 +131,51 @@ public class Menu {
     }
 
     public int groupChat() {
-        System.out.println("Bienvenido al chat grupal de XMPP. Ingresa la opcion que deseas");
-        System.out.println("1. Crear chat grupal.");
-        System.out.println("2. Unirte a un chat grupal.");
-        System.out.println("3. Hablar en un chat grupal.");
-        System.out.print("> ");
-        String contact = scanner.nextLine();
-        return Integer.parseInt(contact);
+        boolean wellResponseFormat = false;
+        int response = 0;
+        while (!wellResponseFormat) {
+            try {
+                System.out.println("Bienvenido al chat grupal de XMPP. Ingresa la opcion que deseas");
+                System.out.println("1. Crear chat grupal.");
+                System.out.println("2. Unirte a un chat grupal.");
+                System.out.println("3. Hablar en un chat grupal.");
+                System.out.println("4. Eliminar chat grupal.");
+                System.out.println("5. Salir.");
+                System.out.print("> ");
+                String contact = scanner.nextLine();
+                response = Integer.parseInt(contact);
+                wellResponseFormat = true;
+            } catch (Exception e) {
+                System.out.println("Ingresa la opcion correctamente.");
+            }
+
+        }
+
+        return response;
+    }
+
+    public String getGroupNameToChat() {
+        boolean infoWellSubmitted = false;
+        String groupName = null;
+        while (!infoWellSubmitted) {
+            System.out.println("Ingrese el nombre del grupo en el que desea chatear.");
+            System.out.print("> ");
+            groupName = scanner.nextLine();
+            infoWellSubmitted = true;
+        }
+        return groupName;
+    }
+
+    public String getGroupChatInfoDeletion() {
+        boolean infoWellSubmitted = false;
+        String groupName = null;
+        while (!infoWellSubmitted) {
+            System.out.println("Ingrese el nombre del grupo que desea borrar.");
+            System.out.print("> ");
+            groupName = scanner.nextLine();
+            infoWellSubmitted = true;
+        }
+        return groupName;
     }
 
     public ArrayList<String> getGroupChatInfoCreation(int option) {
@@ -152,7 +190,7 @@ public class Menu {
             }
             System.out.print("> ");
             groupName = scanner.nextLine();
-            System.out.println("Ingresa el apodo que quieres tener el el grupo.");
+            System.out.println("Ingresa el apodo que quieres tener en el grupo.");
             System.out.print("> ");
             nickname = scanner.nextLine();
             if (groupName.isEmpty() || nickname.isEmpty()) {

@@ -47,6 +47,8 @@ public class Connection {
     private XMPPTCPConnectionConfiguration config;
 
     private static HashMap<String, ArrayList<String>> messages;
+    private static HashMap<String, ArrayList<String>> groupMessages;
+    private static HashMap<String, MultiUserChat> groupChatCredentials;
     private String screenCleaner;
     private static final String red = "\u001B[31m";
     private static final String green = "\u001B[32m";
@@ -59,9 +61,12 @@ public class Connection {
     public static String currentChatUser;
     private ChatMessageListener chatListener;
     private MultiUserChatManager manager;
+    private String currentUser = null;
 
     public Connection() {
         messages = new HashMap<String, ArrayList<String>>();
+        groupMessages = new HashMap<String, ArrayList<String>>();
+        groupChatCredentials = new HashMap<String, MultiUserChat>();
         screenCleaner = "\n\n\n\n\n\n\n";
         scanner = new Scanner(System.in);
         currentChatUser = "";
@@ -191,6 +196,7 @@ public class Connection {
                 }
             });*/
             roster.reloadAndWait();
+            currentUser = username;
             System.out.println("Inicio de sesion exitoso.");
             resetChatManager();
             return 0;
@@ -359,6 +365,10 @@ public class Connection {
         }
     }
 
+    public void resetChatUser() {
+        currentChatUser = null;
+    }
+
     private void sendMessage(String user, String message) {
         try {
             ChatManager chatManager = ChatManager.getInstanceFor(connection);
@@ -412,40 +422,159 @@ public class Connection {
         System.out.println(screenCleaner);
     }
 
+    private void addGroupChatToHistory(String groupName) {
+        try {
+            semaphore.acquire();
+            if (! groupMessages.containsKey(groupName)) {
+                groupMessages.put(groupName, new ArrayList<String>());
+            }
+            semaphore.release();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addMessageToGroupHistory(String groupName, String message) {
+        try {
+            semaphore.acquire();
+            groupMessages.get(groupName).add(message);
+            semaphore.release();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addMUCListener(MultiUserChat muc, String roomName, String nickname) {
+        muc.addMessageListener((from) -> {
+            String body = from.getBody();
+            Jid fromJid = from.getFrom();
+            Resourcepart senderJid = fromJid.getResourceOrNull();
+            if (senderJid != null) {
+                String sender = senderJid.toString();
+                String message = sender + ": " + body;
+                if (sender.equals(nickname)) {
+                    addMessageToGroupHistory(roomName, green + message + reset);
+                } else {
+                    addMessageToGroupHistory(roomName, blue + message + reset);
+                }
+
+                if (currentChatUser != null && currentChatUser.equals(roomName)) {
+                    if (!sender.equals(roomName)) {
+                        if (sender.equals(nickname)) {
+                            System.out.println(green + message + reset);
+                        } else {
+                            System.out.println(blue + message + reset);
+                        }
+                        System.out.print("> ");
+                    }
+                } else {
+                    System.out.println(yellow + "\nIncoming message from group " + roomName + ". User " + sender + reset + ".\n");
+                    System.out.print("> ");
+                }
+            }
+
+        });
+    }
+
+    private void newCredentialGroupChat(String groupName, MultiUserChat muc) {
+        groupChatCredentials.put(groupName, muc);
+    }
+
     public void createGroupChat(String chatRoomName, String nickname) {
         try {
             manager = MultiUserChatManager.getInstanceFor(connection);
-            String roomName = chatRoomName + "@alumchat.xyz";
+            String roomName = chatRoomName + "@conference.alumchat.xyz";
             EntityBareJid roomJid = JidCreate.entityBareFrom(roomName);
             MultiUserChat muc = manager.getMultiUserChat(roomJid);
             Resourcepart resource = Resourcepart.from(nickname);
             muc.create(resource).makeInstant();
-            muc.addMessageListener((from) -> {
-                String sender = from.getElementName().toString();
-                String body = from.getBody();
-                System.out.println("Mensaje en sala: " + roomName);
-                System.out.println("Remitente: " + sender);
-                System.out.println("Mensaje: " + body);
-            });
+            addGroupChatToHistory(roomName);
+            addMUCListener(muc, roomName, nickname);
+            newCredentialGroupChat(roomName, muc);
             System.out.println("Hemos creado el grupo con éxito.");
         } catch (Exception e) {
-            e.printStackTrace();
-            // System.out.println("Algo salió mal. No pudimos crear el grupo :(");
+            System.out.println("Algo salió mal. No pudimos crear el grupo :(");
+        }
+    }
+
+    public void deleteGroupChat(String chatRoomName) {
+        try {
+            manager = MultiUserChatManager.getInstanceFor(connection);
+            String roomName = chatRoomName + "@conference.alumchat.xyz";
+            EntityBareJid roomJid = JidCreate.entityBareFrom(roomName);
+            MultiUserChat muc = manager.getMultiUserChat(roomJid);
+            muc.destroy(null, null);
+            System.out.println("Hemos borrado el grupo con éxito.");
+        } catch (Exception e) {
+            System.out.println("Algo salió mal. No pudimos borrar el grupo :(");
         }
     }
 
     public void joinGroupChat(String chatRoomName, String nickname) {
         try {
             manager = MultiUserChatManager.getInstanceFor(connection);
-            String roomName = chatRoomName + "@alumchat.xyz";
+            String roomName = chatRoomName + "@conference.alumchat.xyz";
             EntityBareJid roomJid = JidCreate.entityBareFrom(roomName);
             MultiUserChat muc = manager.getMultiUserChat(roomJid);
             Resourcepart resource = Resourcepart.from(nickname);
             muc.join(resource);
+            addGroupChatToHistory(roomName);
+            addMUCListener(muc, roomName, nickname);
+            newCredentialGroupChat(roomName, muc);
             System.out.println("Te has unido a la sala con éxito.");
         } catch (Exception e) {
             e.printStackTrace();
-            // System.out.println("Algo salió mal. No pudimos crear el grupo :(");
+            // System.out.println("Algo salió mal. No pudimos unirte el grupo :(");
+        }
+    }
+
+    private void sendGroupMessage(String messageText, MultiUserChat muc) {
+        try {
+            Message message = new Message();
+            message.setBody(messageText);
+            message.setType(Message.Type.groupchat);
+
+            muc.sendMessage(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(red + "\nNo pudimos enviar tu mensaje :(\n" + reset);
+            System.out.print("> ");
+        }
+
+    }
+
+    public void useGroupChat(String chatRoomName) {
+        String roomName = chatRoomName + "@conference.alumchat.xyz";
+        if (groupChatCredentials.containsKey(roomName)) {
+            System.out.println("Iniciando chat, escriba 'exit' para salir...");
+            System.out.println(blue + "--------------- Groupchat " + chatRoomName + " ---------------" + reset);
+            currentChatUser = roomName;
+            boolean finishChat = false;
+            try {
+                semaphore.acquire();
+                if (groupMessages.containsKey(roomName)) {
+                    ArrayList<String> chatMessages = groupMessages.get(roomName);
+                    for (int i = 0; i < chatMessages.size(); i++) {
+                        System.out.println(chatMessages.get(i));
+                    }
+                }
+                semaphore.release();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            MultiUserChat muc = groupChatCredentials.get(roomName);
+            String message = null;
+            while(!finishChat) {
+                System.out.print(green + "> " + reset);
+                message = scanner.nextLine();
+                if (message.toLowerCase().equals("exit")) {
+                    finishChat = true;
+                } else {
+                    sendGroupMessage(message, muc);
+                    /*String formattedMessage = "You: " + message;
+                    addMessageToGroupHistory(roomName, formattedMessage);*/
+                }
+            }
         }
     }
 

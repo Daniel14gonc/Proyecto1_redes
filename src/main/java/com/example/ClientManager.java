@@ -27,6 +27,7 @@ public class ClientManager {
     private void manageActionsAfterAuthorization() {
         int option = 0;
         while (loggedIn && !terminate) {
+            connection.resetChatUser();
             option = menu.showActionsMenu();
             System.out.println(option);
             handleAction(option);
@@ -107,14 +108,26 @@ public class ClientManager {
             createGroupChat();
         } else if (option == 2) {
             joinGroupChat();
-        } else {
-            // chatInGroup();
+        } else if (option == 3) {
+            chatInGroup();
+        } else if (option == 4) {
+            deleteGroupChat();
         }
     }
 
     private void createGroupChat() {
         ArrayList<String> data = menu.getGroupChatInfoCreation(1);
         connection.createGroupChat(data.get(0), data.get(1));
+    }
+
+    private void chatInGroup() {
+        String groupName = menu.getGroupNameToChat();
+        connection.useGroupChat(groupName);
+    }
+
+    private void deleteGroupChat() {
+        String groupChat = menu.getGroupChatInfoDeletion();
+        connection.deleteGroupChat(groupChat);
     }
 
     private void joinGroupChat() {

@@ -156,13 +156,32 @@ public class Connection {
         connection.addAsyncStanzaListener((stanza) -> {
             Presence presence = (Presence) stanza;
             String from = presence.getFrom().toString();
-            System.out.println(yellow + "Recibida solicitud de suscripción de: " + from + ". Aceptada automaticamente." + reset);
-            Presence subscribedPresence = new Presence(Presence.Type.subscribed);
-            subscribedPresence.setTo(presence.getFrom());
-            try {
-                connection.sendStanza(subscribedPresence);
-            } catch (SmackException.NotConnectedException | InterruptedException e) {
-                e.printStackTrace();
+            if (presence.getType().equals(Presence.Type.subscribe)) {
+                System.out.println(yellow + "Has recibido una solicitud de suscripción de: " + from + ". Aceptada automaticamente." + reset);
+                Presence subscribedPresence = new Presence(Presence.Type.subscribed);
+                subscribedPresence.setTo(presence.getFrom());
+                try {
+                    connection.sendStanza(subscribedPresence);
+                } catch (SmackException.NotConnectedException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else if (presence.getType().equals(Presence.Type.subscribed)) {
+                System.out.println(yellow + "Tu solicitud de suscripción a " + from + " ha sido aceptada." + reset);
+            } else if (presence.getType().equals(Presence.Type.available)) {
+                System.out.println(yellow + "El usuario " + from + " ahora está disponible." + reset);
+            } else if (presence.getType().equals(Presence.Type.unavailable)) {
+                System.out.println(yellow + "El usuario " + from + " ya no está disponible." + reset);
+            }
+
+            Presence.Mode mode = presence.getMode();
+            if (mode == Presence.Mode.away) {
+                System.out.println(yellow + from + " está ausente." + reset);
+            } else if (mode == Presence.Mode.dnd) {
+                System.out.println(yellow + from + " no quiere que lo molesten." + reset);
+            } else if (mode == Presence.Mode.available) {
+                System.out.println(yellow + from + " está en modo disponible." + reset);
+            } else if (mode == Presence.Mode.chat) {
+                System.out.println(yellow + from + " está en disponible para chatear." + reset);
             }
             System.out.print("\n> ");
         }, presenceFilter);
@@ -178,7 +197,7 @@ public class Connection {
             sendAvailableStanza();
             roster = Roster.getInstanceFor(connection);
             addStanzaListener();
-            // roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
+            roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
             roster.reloadAndWait();
             currentUser = username;
             System.out.println("Inicio de sesion exitoso.");

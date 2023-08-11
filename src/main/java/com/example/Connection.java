@@ -113,7 +113,8 @@ public class Connection {
     }
 
     private void removeChatListener() {
-        chatManager.removeIncomingListener(chatListener);
+        if (chatListener != null)
+            chatManager.removeIncomingListener(chatListener);
         // chatManager = null;
     }
 
@@ -144,57 +145,40 @@ public class Connection {
 
     }
 
+    private void addStanzaListener() {
+        StanzaFilter presenceFilter = new StanzaFilter() {
+            @Override
+            public boolean accept(Stanza stanza) {
+                return stanza instanceof Presence && ((Presence) stanza).getType().equals(Presence.Type.subscribe);
+            }
+        };
+
+        connection.addAsyncStanzaListener((stanza) -> {
+            Presence presence = (Presence) stanza;
+            String from = presence.getFrom().toString();
+            System.out.println(yellow + "Recibida solicitud de suscripción de: " + from + ". Aceptada automaticamente." + reset);
+            Presence subscribedPresence = new Presence(Presence.Type.subscribed);
+            subscribedPresence.setTo(presence.getFrom());
+            try {
+                connection.sendStanza(subscribedPresence);
+            } catch (SmackException.NotConnectedException | InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.print("\n> ");
+        }, presenceFilter);
+    }
+
     public int login(String username, String password) {
         try {
             if (!connection.isConnected()) {
                 connection = new XMPPTCPConnection(config);
                 connection.connect();
-                /*connection.addAsyncStanzaListener(new StanzaListener() {
-                    @Override
-                    public void processStanza(Stanza packet) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException {
-                        System.out.println("Received: " + packet.toXML());
-                    }
-                }, new StanzaFilter() {
-                    @Override
-                    public boolean accept(Stanza stanza) {
-                        return true;
-                    }
-                });*/
             }
             connection.login(username, password);
             sendAvailableStanza();
             roster = Roster.getInstanceFor(connection);
-            roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
-            /*roster.addRosterListener(new RosterListener() {
-
-                @Override
-                public void entriesAdded(Collection<Jid> addresses) {
-                    for (Jid address : addresses) {
-                        // Aceptar automáticamente la solicitud de amistad
-                        try {
-                            roster.createEntry(address.asBareJid(), null, null);
-                            System.out.println("Solicitud de amistad aceptada de: " + address);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-                @Override
-                public void entriesUpdated(Collection<Jid> addresses) {
-
-                }
-
-                @Override
-                public void entriesDeleted(Collection<Jid> addresses) {
-
-                }
-
-                @Override
-                public void presenceChanged(Presence presence) {
-
-                }
-            });*/
+            addStanzaListener();
+            // roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
             roster.reloadAndWait();
             currentUser = username;
             System.out.println("Inicio de sesion exitoso.");
@@ -358,7 +342,7 @@ public class Connection {
         presence.setMode(mode);
         try {
             connection.sendStanza(presence);
-            Thread.sleep(150);
+            Thread.sleep(300);
             System.out.println("Status modificado exitosamente.");
         } catch (Exception e) {
             e.printStackTrace();

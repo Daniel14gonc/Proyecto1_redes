@@ -53,6 +53,7 @@ public class Menu {
                 System.out.println("4. Habla con un usuario.");
                 System.out.println("5. Chat grupal.");
                 System.out.println("6. Crea o modifica tu mensaje de presencia.");
+                System.out.println("7. Enviar archivo.");
                 System.out.println("10. Cerrar sesion.");
                 System.out.println("11. Eliminar cuenta.");
                 System.out.println("12. Salir");
@@ -137,10 +138,11 @@ public class Menu {
             try {
                 System.out.println("Bienvenido al chat grupal de XMPP. Ingresa la opcion que deseas");
                 System.out.println("1. Crear chat grupal.");
-                System.out.println("2. Unirte a un chat grupal.");
-                System.out.println("3. Hablar en un chat grupal.");
-                System.out.println("4. Eliminar chat grupal.");
-                System.out.println("5. Salir.");
+                System.out.println("2. Invitar a alguien a un grupo.");
+                System.out.println("3. Unirte a un chat grupal.");
+                System.out.println("4. Hablar en un chat grupal.");
+                System.out.println("5. Eliminar chat grupal.");
+                System.out.println("6. Salir.");
                 System.out.print("> ");
                 String contact = scanner.nextLine();
                 response = Integer.parseInt(contact);
@@ -152,6 +154,29 @@ public class Menu {
         }
 
         return response;
+    }
+
+    public ArrayList<String> inviteToGroupChat() {
+        boolean infoWellSubmitted = false;
+        String groupName = null;
+        String user = null;
+        while (!infoWellSubmitted) {
+            System.out.println("Ingresa el nombre del grupo.");
+            System.out.print("> ");
+            groupName = scanner.nextLine();
+            System.out.println("Ingresa el usuario al que quieres invitar (recuerda agregar su dominio como @alumchat.xyz).");
+            System.out.print("> ");
+            user = scanner.nextLine();
+            if (groupName.isEmpty() || user.isEmpty()) {
+                System.out.println("Ingresa correctamente los datos. Probemos de nuevo.\n");
+            } else {
+                infoWellSubmitted = true;
+            }
+        }
+        ArrayList<String> data = new ArrayList<String>();
+        data.add(groupName);
+        data.add(user);
+        return data;
     }
 
     public String getGroupNameToChat() {

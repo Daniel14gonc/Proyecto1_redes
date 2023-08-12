@@ -20,6 +20,9 @@ import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.filetransfer.FileTransfer;
+import org.jivesoftware.smackx.filetransfer.FileTransferManager;
+import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
 import org.jivesoftware.smackx.iqregister.AccountManager;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
@@ -34,6 +37,7 @@ import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -62,6 +66,7 @@ public class Connection {
     private ChatMessageListener chatListener;
     private MultiUserChatManager manager;
     private String currentUser = null;
+    private boolean stanzaListenerAdded;
 
     public Connection() {
         messages = new HashMap<String, ArrayList<String>>();
@@ -70,6 +75,7 @@ public class Connection {
         screenCleaner = "\n\n\n\n\n\n\n";
         scanner = new Scanner(System.in);
         currentChatUser = "";
+        stanzaListenerAdded = false;
     }
 
     public void connect(String server) {
@@ -83,17 +89,7 @@ public class Connection {
                         .build();
                 connection = new XMPPTCPConnection(config);
                 connection.connect();
-                /*connection.addAsyncStanzaListener(new StanzaListener() {
-                    @Override
-                    public void processStanza(Stanza packet) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException {
-                        System.out.println("Received: " + packet.toXML());
-                    }
-                }, new StanzaFilter() {
-                    @Override
-                    public boolean accept(Stanza stanza) {
-                        return true;
-                    }
-                });*/
+                Thread.sleep(150);
                 // chatManager = ChatManager.getInstanceFor(connection);
                 /*connection.addAsyncStanzaListener(new StanzaListener() {
                     @Override
@@ -115,12 +111,12 @@ public class Connection {
     private void removeChatListener() {
         if (chatListener != null)
             chatManager.removeIncomingListener(chatListener);
-        // chatManager = null;
+        chatListener = null;
     }
 
     private void resetChatManager() {
         chatManager = ChatManager.getInstanceFor(connection);
-        chatListener = null;
+        removeChatListener();
         chatListener = new ChatMessageListener();
         chatManager.addIncomingListener(chatListener);
     }
@@ -134,11 +130,12 @@ public class Connection {
             accountManager.sensitiveOperationOverInsecureConnection(true);
             Localpart localPartUsername = Localpart.from(username);
             accountManager.createAccount(localPartUsername, password);
-            connection.login(username, password);
+            // connection.login(username, password);
+            login(username, password);
             System.out.println("Registro exitoso e inicio de sesion exitosos.");
             return 0;
         } catch (Exception e) {
-            // e.printStackTrace();
+            e.printStackTrace();
             System.out.println("Credenciales invalidas. No te pudimos registrar.");
             return -1;
         }
@@ -146,45 +143,62 @@ public class Connection {
     }
 
     private void addStanzaListener() {
-        StanzaFilter presenceFilter = new StanzaFilter() {
+        /*connection.addAsyncStanzaListener(new StanzaListener() {
+            @Override
+            public void processStanza(Stanza packet) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException {
+                System.out.println("Received: " + packet.toXML());
+            }
+        }, new StanzaFilter() {
             @Override
             public boolean accept(Stanza stanza) {
-                return stanza instanceof Presence && ((Presence) stanza).getType().equals(Presence.Type.subscribe);
+                return true;
             }
-        };
-
-        connection.addAsyncStanzaListener((stanza) -> {
-            Presence presence = (Presence) stanza;
-            String from = presence.getFrom().toString();
-            if (presence.getType().equals(Presence.Type.subscribe)) {
-                System.out.println(yellow + "Has recibido una solicitud de suscripción de: " + from + ". Aceptada automaticamente." + reset);
-                Presence subscribedPresence = new Presence(Presence.Type.subscribed);
-                subscribedPresence.setTo(presence.getFrom());
-                try {
-                    connection.sendStanza(subscribedPresence);
-                } catch (SmackException.NotConnectedException | InterruptedException e) {
-                    e.printStackTrace();
+        });*/
+        if (!stanzaListenerAdded) {
+            StanzaFilter presenceFilter = new StanzaFilter() {
+                @Override
+                public boolean accept(Stanza stanza) {
+                    return stanza instanceof Presence && ((Presence) stanza).getType().equals(Presence.Type.subscribe);
                 }
-            } else if (presence.getType().equals(Presence.Type.subscribed)) {
-                System.out.println(yellow + "Tu solicitud de suscripción a " + from + " ha sido aceptada." + reset);
-            } else if (presence.getType().equals(Presence.Type.available)) {
-                System.out.println(yellow + "El usuario " + from + " ahora está disponible." + reset);
-            } else if (presence.getType().equals(Presence.Type.unavailable)) {
-                System.out.println(yellow + "El usuario " + from + " ya no está disponible." + reset);
-            }
+            };
 
-            Presence.Mode mode = presence.getMode();
-            if (mode == Presence.Mode.away) {
-                System.out.println(yellow + from + " está ausente." + reset);
-            } else if (mode == Presence.Mode.dnd) {
-                System.out.println(yellow + from + " no quiere que lo molesten." + reset);
-            } else if (mode == Presence.Mode.available) {
-                System.out.println(yellow + from + " está en modo disponible." + reset);
-            } else if (mode == Presence.Mode.chat) {
-                System.out.println(yellow + from + " está en disponible para chatear." + reset);
-            }
-            System.out.print("\n> ");
-        }, presenceFilter);
+            connection.addAsyncStanzaListener((stanza) -> {
+                System.out.println("Received: " + stanza.toXML());
+                Presence presence = (Presence) stanza;
+                String from = presence.getFrom().toString();
+                if (presence.getType().equals(Presence.Type.subscribe)) {
+                    System.out.println(yellow + "Has recibido una solicitud de suscripción de: " + from + ". Aceptada automaticamente." + reset);
+                    Presence subscribedPresence = new Presence(Presence.Type.subscribe);
+                    System.out.println(presence.getFrom());
+                    subscribedPresence.setTo(presence.getFrom());
+                    try {
+                        connection.sendStanza(subscribedPresence);
+                        Thread.sleep(150);
+                    } catch (SmackException.NotConnectedException | InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else if (presence.getType().equals(Presence.Type.subscribed)) {
+                    System.out.println(yellow + "Tu solicitud de suscripción a " + from + " ha sido aceptada." + reset);
+                } else if (presence.getType().equals(Presence.Type.available)) {
+                    System.out.println(yellow + "El usuario " + from + " ahora está disponible." + reset);
+                } else if (presence.getType().equals(Presence.Type.unavailable)) {
+                    System.out.println(yellow + "El usuario " + from + " ya no está disponible." + reset);
+                }
+
+                Presence.Mode mode = presence.getMode();
+                if (mode == Presence.Mode.away) {
+                    System.out.println(yellow + from + " está ausente." + reset);
+                } else if (mode == Presence.Mode.dnd) {
+                    System.out.println(yellow + from + " no quiere que lo molesten." + reset);
+                } else if (mode == Presence.Mode.available) {
+                    System.out.println(yellow + from + " está en modo disponible." + reset);
+                } else if (mode == Presence.Mode.chat) {
+                    System.out.println(yellow + from + " está en disponible para chatear." + reset);
+                }
+                System.out.print("\n> ");
+            }, presenceFilter);
+            stanzaListenerAdded = true;
+        }
     }
 
     public int login(String username, String password) {
@@ -192,18 +206,23 @@ public class Connection {
             if (!connection.isConnected()) {
                 connection = new XMPPTCPConnection(config);
                 connection.connect();
+                Thread.sleep(150);
             }
             connection.login(username, password);
             sendAvailableStanza();
             roster = Roster.getInstanceFor(connection);
             addStanzaListener();
             roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
-            roster.reloadAndWait();
             currentUser = username;
             System.out.println("Inicio de sesion exitoso.");
             resetChatManager();
+            System.out.println(connection.getUser().toString());
+            roster.reloadAndWait();
+            /*Thread.sleep(150);
+             */
             return 0;
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("Credenciales invalidas. No puedes iniciar sesion");
             return -1;
         }
@@ -283,6 +302,15 @@ public class Connection {
             roster = Roster.getInstanceFor(connection);
             roster.reloadAndWait();
             String result = "";
+            /*RosterEntry selfEntry = roster.getEntry(connection.getUser().asBareJid());
+            System.out.println(selfEntry.toString());
+            Presence selfPresence = roster.getPresence(JidCreate.bareFrom(selfEntry.getUser()));
+
+            Presence.Type type = selfPresence.getType();
+            String status = selfPresence.getStatus();
+
+            System.out.println("Type: " + type);
+            System.out.println("Status: " + status);*/
 
             // Print the list of contacts and their groups
             result += "Contactos:\n";
@@ -425,6 +453,34 @@ public class Connection {
         System.out.println(screenCleaner);
     }
 
+    public void sendFile() {
+        String user = "gonzalez20293@alumchat.xyz";
+        try {
+            // Create a file transfer manager
+            FileTransferManager transferManager = FileTransferManager.getInstanceFor(connection);
+
+            // Create a file transfer negotiation
+            OutgoingFileTransfer transfer = transferManager.createOutgoingFileTransfer(JidCreate.entityFullFrom(user));
+
+            // Specify the file you want to send
+            String filePath = "./prueba.txt"; // Replace with the actual file path
+            transfer.sendFile(new File(filePath), "Description of the file");
+
+            // Wait for the transfer to complete
+            while (!transfer.isDone()) {
+                if (transfer.getStatus() == FileTransfer.Status.error) {
+                    System.out.println("Error sending file: " + transfer.getError());
+                } else if (transfer.getStatus() == FileTransfer.Status.complete) {
+                    System.out.println("File sent successfully");
+                }
+                Thread.sleep(1000); // Wait for a second before checking the status again
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
     private void addGroupChatToHistory(String groupName) {
         try {
             semaphore.acquire();
@@ -497,6 +553,34 @@ public class Connection {
             System.out.println("Hemos creado el grupo con éxito.");
         } catch (Exception e) {
             System.out.println("Algo salió mal. No pudimos crear el grupo :(");
+        }
+    }
+
+    private void invite(MultiUserChat muc, String user) {
+        try {
+            muc.invite(JidCreate.entityBareFrom(user), "Te invito a mi grupo.");
+        } catch (Exception e) {
+            System.out.println("No pudimos invitarlo al grupo.");
+        }
+    }
+
+    public void inviteToGroupChat(String groupName, String user) {
+        groupName = groupName + "@conference.alumchat.xyz";
+        if (groupChatCredentials.containsKey(groupName)) {
+            MultiUserChat muc = groupChatCredentials.get(groupName);
+            invite(muc, user);
+            System.out.println("Se ha invitado bien al usuario.");
+            System.out.print("\n> ");
+        } else {
+            try {
+                MultiUserChat muc = groupChatCredentials.get(groupName);
+                String nickname = connection.getUser().toString();
+                createGroupChat(groupName, nickname);
+                invite(muc, user);
+                System.out.print("\n> ");
+            } catch (Exception e) {
+                System.out.println("No pudimos hacer la invitación al grupo :(");
+            }
         }
     }
 

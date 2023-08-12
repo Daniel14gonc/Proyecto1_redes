@@ -54,6 +54,9 @@ public class ClientManager {
             case 6:
                 handleStatusMessageChange();
                 break;
+            case 7:
+                sendFile();
+                break;
             case 10:
                 logout();
                 break;
@@ -99,7 +102,10 @@ public class ClientManager {
     private void chatWithUser() {
         String user = menu.getUserToChat();
         connection.chatWithUser(user);
+    }
 
+    private void sendFile() {
+        connection.sendFile();
     }
 
     private void handleGroupChat() {
@@ -107,10 +113,12 @@ public class ClientManager {
         if (option == 1) {
             createGroupChat();
         } else if (option == 2) {
-            joinGroupChat();
+            inviteToGroupChat();
         } else if (option == 3) {
-            chatInGroup();
+            joinGroupChat();
         } else if (option == 4) {
+            chatInGroup();
+        } else if (option == 5) {
             deleteGroupChat();
         }
     }
@@ -118,6 +126,11 @@ public class ClientManager {
     private void createGroupChat() {
         ArrayList<String> data = menu.getGroupChatInfoCreation(1);
         connection.createGroupChat(data.get(0), data.get(1));
+    }
+
+    private void inviteToGroupChat() {
+        ArrayList<String> data = menu.inviteToGroupChat();
+        connection.inviteToGroupChat(data.get(0), data.get(1));
     }
 
     private void chatInGroup() {

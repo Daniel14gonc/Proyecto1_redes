@@ -36,10 +36,10 @@ import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.jid.parts.Resourcepart;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class Connection {
@@ -65,6 +65,7 @@ public class Connection {
     private MultiUserChatManager manager;
     private String currentUser = null;
     private boolean stanzaListenerAdded;
+    private FileTransferManager fileManager;
 
     public Connection() {
         messages = new HashMap<String, ArrayList<String>>();
@@ -90,7 +91,10 @@ public class Connection {
                 connection.connect();
                 Thread.sleep(150);
                 roster = Roster.getInstanceFor(connection);
+                fileManager = FileTransferManager.getInstanceFor(connection);
                 createRosterListener();
+                createFileTransferListener();
+                addStanzaListener();
                 // chatManager = ChatManager.getInstanceFor(connection);
                 /*connection.addAsyncStanzaListener(new StanzaListener() {
                     @Override
@@ -226,6 +230,23 @@ public class Connection {
         });
     }
 
+    public void createFileTransferListener() {
+        fileManager.addFileTransferListener(new FileTransferListener() {
+            public void fileTransferRequest(FileTransferRequest request) {
+                // Procesar la solicitud de transferencia de archivo entrante
+                IncomingFileTransfer transfer = request.accept();
+                System.out.println("te enviaron un file");
+                try {
+                    transfer.receiveFile(new File("file.txt")); // Cambia esto por la ruta donde quieras guardar el archivo
+                } catch (SmackException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
     public int login(String username, String password) {
         try {
             if (!connection.isConnected()) {
@@ -233,9 +254,13 @@ public class Connection {
                 connection.connect();
                 Thread.sleep(150);
                 roster = Roster.getInstanceFor(connection);
+                fileManager = FileTransferManager.getInstanceFor(connection);
                 createRosterListener();
+                createFileTransferListener();
+                addStanzaListener();
             } else {
                 roster = Roster.getInstanceFor(connection);
+                fileManager = FileTransferManager.getInstanceFor(connection);
             }
             connection.login(username, password);
             sendAvailableStanza();
@@ -246,15 +271,6 @@ public class Connection {
             System.out.println("Inicio de sesion exitoso.");
             resetChatManager();
 
-            System.out.println(connection.getUser().toString());
-            FileTransferManager manager = FileTransferManager.getInstanceFor(connection);
-            manager.addFileTransferListener(new FileTransferListener() {
-                public void fileTransferRequest(FileTransferRequest request) {
-                    // Procesar la solicitud de transferencia de archivo entrante
-                    IncomingFileTransfer transfer = request.accept();
-                    System.out.println("te enviaron un file");
-                }
-            });
             return 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -337,17 +353,6 @@ public class Connection {
             roster = Roster.getInstanceFor(connection);
             roster.reloadAndWait();
             String result = "";
-            /*RosterEntry selfEntry = roster.getEntry(connection.getUser().asBareJid());
-            System.out.println(selfEntry.toString());
-            Presence selfPresence = roster.getPresence(JidCreate.bareFrom(selfEntry.getUser()));
-
-            Presence.Type type = selfPresence.getType();
-            String status = selfPresence.getStatus();
-
-            System.out.println("Type: " + type);
-            System.out.println("Status: " + status);*/
-
-            // Print the list of contacts and their groups
             result += "Contactos:\n";
             for (RosterEntry entry : roster.getEntries()) {
                 if (entry.getName() != null) {
@@ -404,10 +409,7 @@ public class Connection {
 
     private void sendAvailableStanza() {
         Presence presence = new Presence(Presence.Type.available);
-        // String userJID = "gon20293@alumchat.xyz";
         try {
-            /*BareJid jid = JidCreate.bareFrom(userJID);
-            presence.setTo(jid);*/
             connection.sendStanza(presence);
             Thread.sleep(150);
         } catch (Exception e) {
@@ -488,34 +490,20 @@ public class Connection {
         System.out.println(screenCleaner);
     }
 
+    private String convertToBase64 (String filePath) {
+        try {
+            byte[] fileBytes = Files.readAllBytes(Paths.get(filePath));
+            return Base64.getEncoder().encodeToString(fileBytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public void sendFile() {
         String user = "gonzalez20293@alumchat.xyz";
-        try {
-            // Create a file transfer manager
-            FileTransferManager transferManager = FileTransferManager.getInstanceFor(connection);
-
-            // Create a file transfer negotiation
-            OutgoingFileTransfer transfer = transferManager.createOutgoingFileTransfer(JidCreate.entityFullFrom(user + "/resource"));
-
-            // Specify the file you want to send
-            String filePath = "./prueba.txt"; // Replace with the actual file path
-            transfer.sendFile(new File(filePath), "Description of the file");
-            System.out.println("aca");
-            // Wait for the transfer to complete
-            while (!transfer.isDone()) {
-                System.out.println(transfer.getProgress());
-                if (transfer.getStatus() == FileTransfer.Status.error) {
-                    System.out.println("Error sending file: " + transfer.getError());
-                } else if (transfer.getStatus() == FileTransfer.Status.complete) {
-                    System.out.println("File sent successfully");
-                }
-                Thread.sleep(1000); // Wait for a second before checking the status again
-            }
-            System.out.println("Envio terminado");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        String fileContent = "file" + convertToBase64("./prueba.txt");
+        sendMessage(user, fileContent);
     }
 
     private void addGroupChatToHistory(String groupName) {
@@ -703,9 +691,21 @@ public class Connection {
     }
 
     private static class ChatMessageListener implements IncomingChatMessageListener {
+        private void convertBase64ToFile(String base64String, String filePath) {
+            try {
+                byte[] fileBytes = Base64.getDecoder().decode(base64String);
+                Files.write(Paths.get(filePath), fileBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         @Override
         public void newIncomingMessage(EntityBareJid entityBareJid, Message message, Chat chat) {
-            if (chat.getXmppAddressOfChatPartner().toString().equals(currentChatUser)) {
+            if (message.getBody().substring(0, 4).equals("file")) {
+                System.out.println("File received");
+                convertBase64ToFile(message.getBody().substring(4), "./Files/file.txt");
+            }
+            else if (chat.getXmppAddressOfChatPartner().toString().equals(currentChatUser)) {
                 System.out.println(blue + "User: " + message.getBody() + reset);
                 messages.get(chat.getXmppAddressOfChatPartner().toString()).add(blue + "User: " + message.getBody() + reset);
                 System.out.println("");

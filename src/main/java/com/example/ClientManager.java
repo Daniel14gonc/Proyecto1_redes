@@ -66,6 +66,7 @@ public class ClientManager {
             case 12:
                 loggedIn = false;
                 terminate = true;
+                logout();
                 break;
             default:
                 System.out.println("");

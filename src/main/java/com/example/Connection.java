@@ -20,9 +20,7 @@ import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.roster.RosterListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
-import org.jivesoftware.smackx.filetransfer.FileTransfer;
-import org.jivesoftware.smackx.filetransfer.FileTransferManager;
-import org.jivesoftware.smackx.filetransfer.OutgoingFileTransfer;
+import org.jivesoftware.smackx.filetransfer.*;
 import org.jivesoftware.smackx.iqregister.AccountManager;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
@@ -86,10 +84,13 @@ public class Connection {
                         .setXmppDomain(server)
                         .setHost(server)
                         .setPort(5222)
+                        .setResource("resource")
                         .build();
                 connection = new XMPPTCPConnection(config);
                 connection.connect();
                 Thread.sleep(150);
+                roster = Roster.getInstanceFor(connection);
+                createRosterListener();
                 // chatManager = ChatManager.getInstanceFor(connection);
                 /*connection.addAsyncStanzaListener(new StanzaListener() {
                     @Override
@@ -177,7 +178,7 @@ public class Connection {
                     } catch (SmackException.NotConnectedException | InterruptedException e) {
                         e.printStackTrace();
                     }
-                } else if (presence.getType().equals(Presence.Type.subscribed)) {
+                } /*else if (presence.getType().equals(Presence.Type.subscribed)) {
                     System.out.println(yellow + "Tu solicitud de suscripción a " + from + " ha sido aceptada." + reset);
                 } else if (presence.getType().equals(Presence.Type.available)) {
                     System.out.println(yellow + "El usuario " + from + " ahora está disponible." + reset);
@@ -194,11 +195,35 @@ public class Connection {
                     System.out.println(yellow + from + " está en modo disponible." + reset);
                 } else if (mode == Presence.Mode.chat) {
                     System.out.println(yellow + from + " está en disponible para chatear." + reset);
-                }
+                }*/
                 System.out.print("\n> ");
             }, presenceFilter);
             stanzaListenerAdded = true;
         }
+    }
+
+    public void createRosterListener() {
+        roster.addRosterListener(new RosterListener() {
+            @Override
+            public void entriesAdded(Collection<Jid> addresses) {
+
+            }
+
+            @Override
+            public void entriesUpdated(Collection<Jid> addresses) {
+
+            }
+
+            @Override
+            public void entriesDeleted(Collection<Jid> addresses) {
+
+            }
+
+            public void presenceChanged(Presence presence) {
+                System.out.println(yellow + "Presence changed from user " + presence.getFrom().asBareJid().toString() + ". Type: " + presence.getType() + "; Mode: " + presence.getMode() + "; Status: " + presence.getStatus() + reset);
+                System.out.print("\n> ");
+            }
+        });
     }
 
     public int login(String username, String password) {
@@ -207,19 +232,29 @@ public class Connection {
                 connection = new XMPPTCPConnection(config);
                 connection.connect();
                 Thread.sleep(150);
+                roster = Roster.getInstanceFor(connection);
+                createRosterListener();
+            } else {
+                roster = Roster.getInstanceFor(connection);
             }
             connection.login(username, password);
             sendAvailableStanza();
-            roster = Roster.getInstanceFor(connection);
-            addStanzaListener();
+            if (!roster.isLoaded())
+                roster.reloadAndWait();
             roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
             currentUser = username;
             System.out.println("Inicio de sesion exitoso.");
             resetChatManager();
+
             System.out.println(connection.getUser().toString());
-            roster.reloadAndWait();
-            /*Thread.sleep(150);
-             */
+            FileTransferManager manager = FileTransferManager.getInstanceFor(connection);
+            manager.addFileTransferListener(new FileTransferListener() {
+                public void fileTransferRequest(FileTransferRequest request) {
+                    // Procesar la solicitud de transferencia de archivo entrante
+                    IncomingFileTransfer transfer = request.accept();
+                    System.out.println("te enviaron un file");
+                }
+            });
             return 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -230,15 +265,15 @@ public class Connection {
     }
 
     public int logout() {
-        try {
-            Thread.sleep(150);
-        } catch (Exception e) {
-            System.out.println("AcA?");
-            e.printStackTrace();
-        }
         removeChatListener();
         messages.clear();
         connection.disconnect();
+        try {
+            Thread.sleep(300);
+        } catch (Exception e) {
+
+        }
+
         System.out.println("Se ha cerrado sesion exitosamente.\n");
         return 0;
     }
@@ -460,14 +495,15 @@ public class Connection {
             FileTransferManager transferManager = FileTransferManager.getInstanceFor(connection);
 
             // Create a file transfer negotiation
-            OutgoingFileTransfer transfer = transferManager.createOutgoingFileTransfer(JidCreate.entityFullFrom(user));
+            OutgoingFileTransfer transfer = transferManager.createOutgoingFileTransfer(JidCreate.entityFullFrom(user + "/resource"));
 
             // Specify the file you want to send
             String filePath = "./prueba.txt"; // Replace with the actual file path
             transfer.sendFile(new File(filePath), "Description of the file");
-
+            System.out.println("aca");
             // Wait for the transfer to complete
             while (!transfer.isDone()) {
+                System.out.println(transfer.getProgress());
                 if (transfer.getStatus() == FileTransfer.Status.error) {
                     System.out.println("Error sending file: " + transfer.getError());
                 } else if (transfer.getStatus() == FileTransfer.Status.complete) {
@@ -475,6 +511,7 @@ public class Connection {
                 }
                 Thread.sleep(1000); // Wait for a second before checking the status again
             }
+            System.out.println("Envio terminado");
         } catch (Exception e) {
             e.printStackTrace();
         }

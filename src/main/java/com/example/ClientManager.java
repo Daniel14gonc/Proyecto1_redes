@@ -106,7 +106,8 @@ public class ClientManager {
     }
 
     private void sendFile() {
-        connection.sendFile();
+        ArrayList<String> data = menu.getFileAndUserInfo();
+        connection.sendFile(data.get(0), data.get(1));
     }
 
     private void handleGroupChat() {

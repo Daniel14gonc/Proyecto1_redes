@@ -41,6 +41,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Semaphore;
+import java.io.File;
+import java.time.Instant;
 
 public class Connection {
 
@@ -500,10 +502,27 @@ public class Connection {
         }
     }
 
-    public void sendFile() {
-        String user = "gonzalez20293@alumchat.xyz";
-        String fileContent = "file" + convertToBase64("./prueba.txt");
-        sendMessage(user, fileContent);
+    private String getFileExtension(String path) {
+        int lastIndex = path.lastIndexOf(".");
+        if (lastIndex != -1 && lastIndex < path.length() - 1) {
+            return path.substring(lastIndex + 1);
+        }
+        return "";
+    }
+
+    public void sendFile(String user, String path) {
+        try {
+            String fileExtension = getFileExtension(path);
+            if (fileExtension.equals("")) {
+                System.out.println("La ruta de archivo no tiene la extension adecuada. No lo pudimos enviar.");
+            } else {
+                String fileContent = "file|" + fileExtension + "|" + convertToBase64(path);
+                sendMessage(user, fileContent);
+                System.out.println("Archivo enviado con exito");
+            }
+        } catch (Exception e) {
+            System.out.println("Algo salio mal, no pudimos enviar el archivo :(");
+        }
     }
 
     private void addGroupChatToHistory(String groupName) {
@@ -693,17 +712,54 @@ public class Connection {
     private static class ChatMessageListener implements IncomingChatMessageListener {
         private void convertBase64ToFile(String base64String, String filePath) {
             try {
+
                 byte[] fileBytes = Base64.getDecoder().decode(base64String);
                 Files.write(Paths.get(filePath), fileBytes);
+                System.out.println(blue + "Hemos guardado el archivo con exito en " + filePath + reset);
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("No pudimos guardar el archivo porque el formato estaba mal.");
+            }
+            System.out.print("\n> ");
+        }
+
+        private String getFileExtension(String message) {
+            String extension = message.split("\\|")[1];
+            return extension;
+        }
+
+        private String formFileName(String message, String user) {
+            String extension = getFileExtension(message);
+            Instant instant = Instant.now();
+            long timestamp = instant.toEpochMilli();
+            String name = "./Files/" + user + "_" + timestamp + "." + extension;
+            return  name;
+        }
+
+        private String getFileContent(String message) {
+            String extension = message.split("\\|")[2];
+            return extension;
+        }
+
+        private boolean isFileFormatCorrect(String message) {
+            try {
+                String[] extension = message.split("\\|");
+                if (extension.length != 3) {
+                    return false;
+                }
+                return true;
+            } catch (Exception e) {
+                return false;
             }
         }
         @Override
         public void newIncomingMessage(EntityBareJid entityBareJid, Message message, Chat chat) {
             if (message.getBody().substring(0, 4).equals("file")) {
-                System.out.println("File received");
-                convertBase64ToFile(message.getBody().substring(4), "./Files/file.txt");
+                if (isFileFormatCorrect(message.getBody())) {
+                    System.out.println(yellow + "File received from: " + chat.getXmppAddressOfChatPartner().toString() + reset);
+                    String fileName = formFileName(message.getBody(), chat.getXmppAddressOfChatPartner().toString());
+                    String fileContent = getFileContent(message.getBody());
+                    convertBase64ToFile(fileContent, fileName);
+                }
             }
             else if (chat.getXmppAddressOfChatPartner().toString().equals(currentChatUser)) {
                 System.out.println(blue + "User: " + message.getBody() + reset);
@@ -728,7 +784,6 @@ public class Connection {
                 }
 
             }
-
         }
     }
 }

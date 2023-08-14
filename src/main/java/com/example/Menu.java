@@ -1,5 +1,7 @@
 package com.example;
 
+import org.minidns.record.A;
+
 import java.util.ArrayList;
 import java.util.Scanner;
 public class Menu {
@@ -115,6 +117,19 @@ public class Menu {
         System.out.print("> ");
         String user = scanner.nextLine();
         return user;
+    }
+
+    public ArrayList<String> getFileAndUserInfo() {
+        System.out.println("Ingresa el nombre del usuario al que quieres mandar el archivo (recurdan incluir el dominio, por ejemplo @alumchat.xyz).");
+        System.out.print("> ");
+        String user = scanner.nextLine();
+        System.out.println("Ingresa la ruta del archivo que quieres enviar.");
+        System.out.print("> ");
+        String file = scanner.nextLine();
+        ArrayList<String> data = new ArrayList<String>();
+        data.add(user);
+        data.add(file);
+        return data;
     }
 
     public String getUserToSubscribe() {

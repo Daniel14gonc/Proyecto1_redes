@@ -108,7 +108,7 @@ public class Connection {
                     }
                 });*/
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
             }
         }
     }
@@ -140,7 +140,7 @@ public class Connection {
             System.out.println("Registro exitoso e inicio de sesion exitosos.");
             return 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             System.out.println("Credenciales invalidas. No te pudimos registrar.");
             return -1;
         }
@@ -148,17 +148,6 @@ public class Connection {
     }
 
     private void addStanzaListener() {
-        /*connection.addAsyncStanzaListener(new StanzaListener() {
-            @Override
-            public void processStanza(Stanza packet) throws SmackException.NotConnectedException, InterruptedException, SmackException.NotLoggedInException {
-                System.out.println("Received: " + packet.toXML());
-            }
-        }, new StanzaFilter() {
-            @Override
-            public boolean accept(Stanza stanza) {
-                return true;
-            }
-        });*/
         if (!stanzaListenerAdded) {
             StanzaFilter presenceFilter = new StanzaFilter() {
                 @Override
@@ -180,26 +169,9 @@ public class Connection {
                         connection.sendStanza(subscribedPresence);
                         Thread.sleep(150);
                     } catch (SmackException.NotConnectedException | InterruptedException e) {
-                        e.printStackTrace();
+                        // e.printStackTrace();
                     }
-                } /*else if (presence.getType().equals(Presence.Type.subscribed)) {
-                    System.out.println(yellow + "Tu solicitud de suscripción a " + from + " ha sido aceptada." + reset);
-                } else if (presence.getType().equals(Presence.Type.available)) {
-                    System.out.println(yellow + "El usuario " + from + " ahora está disponible." + reset);
-                } else if (presence.getType().equals(Presence.Type.unavailable)) {
-                    System.out.println(yellow + "El usuario " + from + " ya no está disponible." + reset);
                 }
-
-                Presence.Mode mode = presence.getMode();
-                if (mode == Presence.Mode.away) {
-                    System.out.println(yellow + from + " está ausente." + reset);
-                } else if (mode == Presence.Mode.dnd) {
-                    System.out.println(yellow + from + " no quiere que lo molesten." + reset);
-                } else if (mode == Presence.Mode.available) {
-                    System.out.println(yellow + from + " está en modo disponible." + reset);
-                } else if (mode == Presence.Mode.chat) {
-                    System.out.println(yellow + from + " está en disponible para chatear." + reset);
-                }*/
                 System.out.print("\n> ");
             }, presenceFilter);
             stanzaListenerAdded = true;
@@ -235,13 +207,15 @@ public class Connection {
             public void fileTransferRequest(FileTransferRequest request) {
                 // Procesar la solicitud de transferencia de archivo entrante
                 IncomingFileTransfer transfer = request.accept();
-                System.out.println("te enviaron un file");
+                System.out.println(yellow + "Te han enviado un archivo." + reset);
                 try {
                     transfer.receiveFile(new File("file.txt")); // Cambia esto por la ruta donde quieras guardar el archivo
                 } catch (SmackException e) {
-                    e.printStackTrace();
+                    System.out.println("No pudimos guardar el archivo :(");
+                    // e.printStackTrace();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.out.println("No pudimos guardar el archivo :(");
+                    // e.printStackTrace();
                 }
             }
         });
@@ -329,7 +303,7 @@ public class Connection {
 
             return 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             System.out.println("Credenciales invalidas. No puedes iniciar sesion");
             return -1;
         }
@@ -359,7 +333,7 @@ public class Connection {
             System.out.println("Se elimino cuenta exitosamente.");
             return 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             System.out.println("No pudimos eliminar tu cuenta. Lo sentimos :(");
             return -1;
         }
@@ -434,7 +408,7 @@ public class Connection {
             }
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             return "";
         }
     }
@@ -485,7 +459,8 @@ public class Connection {
             Thread.sleep(300);
             System.out.println("Status modificado exitosamente.");
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("No pudimos modificar tu estado :(");
+            // e.printStackTrace();
         }
     }
 
@@ -520,7 +495,7 @@ public class Connection {
             }
             semaphore.release();
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         }
 
         while (!finishChat) {
@@ -531,7 +506,9 @@ public class Connection {
                     messages.put(userJID, newMessages);
                     semaphore.release();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    finishChat = true;
+                    System.out.println("Hubo un error al cargar los mensajes.");
+                    // e.printStackTrace();
                 }
             }
             System.out.print(green + "> " + reset);
@@ -551,7 +528,8 @@ public class Connection {
             byte[] fileBytes = Files.readAllBytes(Paths.get(filePath));
             return Base64.getEncoder().encodeToString(fileBytes);
         } catch (IOException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
+            System.out.println("Hubo un error al convertir el contenido del archivo a Base64.");
             return null;
         }
     }
@@ -587,7 +565,8 @@ public class Connection {
             }
             semaphore.release();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("No pudimos añadir el chat al historial :(");
+            // e.printStackTrace();
         }
     }
 
@@ -597,7 +576,8 @@ public class Connection {
             groupMessages.get(groupName).add(message);
             semaphore.release();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("No pudimos añadir el chat al historial :(");
+            // e.printStackTrace();
         }
     }
 
@@ -708,8 +688,8 @@ public class Connection {
             newCredentialGroupChat(roomName, muc);
             System.out.println("Te has unido a la sala con éxito.");
         } catch (Exception e) {
-            e.printStackTrace();
-            // System.out.println("Algo salió mal. No pudimos unirte el grupo :(");
+            // e.printStackTrace();
+            System.out.println("Algo salió mal. No pudimos unirte el grupo :(");
         }
     }
 
@@ -721,7 +701,7 @@ public class Connection {
 
             muc.sendMessage(message);
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
             System.out.println(red + "\nNo pudimos enviar tu mensaje :(\n" + reset);
             System.out.print("> ");
         }
@@ -745,7 +725,8 @@ public class Connection {
                 }
                 semaphore.release();
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println("Hubo un error al cargar tus mensajes.");
+                // e.printStackTrace();
             }
             MultiUserChat muc = groupChatCredentials.get(roomName);
             String message = null;
@@ -834,7 +815,7 @@ public class Connection {
                     }
                     semaphore.release();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    // e.printStackTrace();
                 }
             }
         }

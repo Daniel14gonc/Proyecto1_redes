@@ -1,15 +1,23 @@
 package com.example;
 
-import org.minidns.record.A;
-
 import java.util.ArrayList;
 import java.util.Scanner;
+
+/**
+ *
+ * @author Daniel Gonzalez
+ */
+
 public class Menu {
     private Scanner scanner;
     public Menu() {
         scanner = new Scanner(System.in);
     }
 
+    /**
+     * Method to show initial menu of register, login and exit.
+     * @return void
+     */
     public int showInitialMenu() {
         boolean optionChosen = false;
         int option = 0;
@@ -30,6 +38,10 @@ public class Menu {
         return option;
     }
 
+    /**
+     * Method for asking credentials when login.
+     * @return void
+     */
     public ArrayList<String> askCredentials() {
         System.out.println("\nIngresa tu nombre de usuario");
         System.out.print("> ");
@@ -43,6 +55,10 @@ public class Menu {
         return credentials;
     }
 
+    /**
+     * Method to chat actions.
+     * @return number of option chosen.
+     */
     public int showActionsMenu() {
         boolean optionChosen = false;
         int option = 0;
@@ -70,10 +86,18 @@ public class Menu {
         return option;
     }
 
+    /**
+     * Method to print the roster of the user.
+     * @return void
+     */
     public void showRoster(String roster) {
         System.out.println(roster);
     }
 
+    /**
+     * Method to get the new status type, mode and message.
+     * @return array of 3 elements with the options selected.
+     */
     public String[] getStatusMessage() {
         boolean finished = false;
         String message = null;
@@ -112,6 +136,10 @@ public class Menu {
         return result;
     }
 
+    /**
+     * Method to get the user to chat.
+     * @return the user specified to chat
+     */
     public String getUserToChat() {
         System.out.println("Ingresa el usuario con el que quieres hablar (debes agregar el dominio, por ejemplo @alumchat.xyz).");
         System.out.print("> ");
@@ -119,6 +147,10 @@ public class Menu {
         return user;
     }
 
+    /**
+     * Method to get the user and file to send.
+     * @return a list of 2 elements containing the user and the file to send.
+     */
     public ArrayList<String> getFileAndUserInfo() {
         System.out.println("Ingresa el nombre del usuario al que quieres mandar el archivo (recurdan incluir el dominio, por ejemplo @alumchat.xyz).");
         System.out.print("> ");

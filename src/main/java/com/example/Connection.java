@@ -1,18 +1,12 @@
 package com.example;
 
 import org.jivesoftware.smack.*;
-import org.jivesoftware.smack.chat.ChatManagerListener;
-import org.jivesoftware.smack.chat.ChatMessageListener;
 import org.jivesoftware.smack.chat2.Chat;
 import org.jivesoftware.smack.chat2.ChatManager;
 import org.jivesoftware.smack.chat2.IncomingChatMessageListener;
-import org.jivesoftware.smack.debugger.ConsoleDebugger;
-import org.jivesoftware.smack.debugger.SmackDebugger;
-import org.jivesoftware.smack.debugger.SmackDebuggerFactory;
 import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smack.packet.PresenceBuilder;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
@@ -22,14 +16,13 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smackx.filetransfer.*;
 import org.jivesoftware.smackx.iqregister.AccountManager;
+import org.jivesoftware.smackx.muc.InvitationListener;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
-import org.jivesoftware.smackx.vcardtemp.VCardManager;
-import org.jivesoftware.smackx.vcardtemp.packet.VCard;
-import org.jivesoftware.smackx.xdata.form.Form;
-import org.jivesoftware.smackx.xdata.packet.DataForm;
+import org.jivesoftware.smackx.muc.packet.MUCUser;
 import org.jxmpp.jid.BareJid;
 import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.EntityJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
@@ -41,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Semaphore;
-import java.io.File;
 import java.time.Instant;
 
 public class Connection {
@@ -65,9 +57,11 @@ public class Connection {
     public static String currentChatUser;
     private ChatMessageListener chatListener;
     private MultiUserChatManager manager;
+    ReconnectionManager reconnectionManager;
     private String currentUser = null;
     private boolean stanzaListenerAdded;
     private FileTransferManager fileManager;
+    private String alias;
 
     public Connection() {
         messages = new HashMap<String, ArrayList<String>>();
@@ -94,9 +88,13 @@ public class Connection {
                 Thread.sleep(150);
                 roster = Roster.getInstanceFor(connection);
                 fileManager = FileTransferManager.getInstanceFor(connection);
+                manager = MultiUserChatManager.getInstanceFor(connection);
+                reconnectionManager = ReconnectionManager.getInstanceFor(connection);
+                reconnectionManager.enableAutomaticReconnection();
                 createRosterListener();
                 createFileTransferListener();
                 addStanzaListener();
+                createInvitationListener();
                 // chatManager = ChatManager.getInstanceFor(connection);
                 /*connection.addAsyncStanzaListener(new StanzaListener() {
                     @Override
@@ -208,7 +206,7 @@ public class Connection {
         }
     }
 
-    public void createRosterListener() {
+    private void createRosterListener() {
         roster.addRosterListener(new RosterListener() {
             @Override
             public void entriesAdded(Collection<Jid> addresses) {
@@ -232,7 +230,7 @@ public class Connection {
         });
     }
 
-    public void createFileTransferListener() {
+    private void createFileTransferListener() {
         fileManager.addFileTransferListener(new FileTransferListener() {
             public void fileTransferRequest(FileTransferRequest request) {
                 // Procesar la solicitud de transferencia de archivo entrante
@@ -249,6 +247,54 @@ public class Connection {
         });
     }
 
+    private void createInvitationListener() {
+        manager.addInvitationListener(new InvitationListener() {
+            @Override
+            public void invitationReceived(XMPPConnection xmppConnection, MultiUserChat multiUserChat, EntityJid entityJid, String s, String s1, Message message, MUCUser.Invite invite) {
+                // Aquí es donde aceptas la invitación automáticamente
+                try {
+                    multiUserChat.join(Resourcepart.from(alias));
+                    addGroupChatToHistory(multiUserChat.getRoom().toString());
+                    addMUCListener(multiUserChat, multiUserChat.getRoom().toString(), alias);
+                    newCredentialGroupChat(multiUserChat.getRoom().toString(), multiUserChat);
+                    System.out.println(yellow + "Te ha llegado una invitacion de " + invite.getFrom().toString() + " para unirte al chat grupal " + multiUserChat.getRoom().toString() + ". La hemos aceptado automaticamente." + reset);
+                    System.out.print("\n> ");
+                } catch (Exception e) {
+
+                }
+            }
+        });
+    }
+
+    private void createConnectionListener() {
+        connection.addConnectionListener(new ConnectionListener() {
+            @Override
+            public void connected(XMPPConnection connection) {
+                // Este método se llama cuando la conexión se establece con éxito.
+            }
+
+            @Override
+            public void authenticated(XMPPConnection connection, boolean resumed) {
+                // Este método se llama cuando la autenticación es exitosa.
+            }
+
+            @Override
+            public void connectionClosed() {
+                // Este método se llama cuando la conexión se cierra normalmente.
+            }
+
+            @Override
+            public void connectionClosedOnError(Exception e) {
+                // Este método se llama cuando la conexión se cierra debido a un error.
+                // Puedes obtener información sobre el error de la excepción 'e'.
+            }
+        });
+    }
+
+    private void setAlias(String username) {
+        alias = username.replace("@alumchat.xyz", "");
+    }
+
     public int login(String username, String password) {
         try {
             if (!connection.isConnected()) {
@@ -257,14 +303,22 @@ public class Connection {
                 Thread.sleep(150);
                 roster = Roster.getInstanceFor(connection);
                 fileManager = FileTransferManager.getInstanceFor(connection);
+                manager = MultiUserChatManager.getInstanceFor(connection);
+                reconnectionManager = ReconnectionManager.getInstanceFor(connection);
+                reconnectionManager.enableAutomaticReconnection();
                 createRosterListener();
                 createFileTransferListener();
                 addStanzaListener();
+                createInvitationListener();
             } else {
                 roster = Roster.getInstanceFor(connection);
                 fileManager = FileTransferManager.getInstanceFor(connection);
+                manager = MultiUserChatManager.getInstanceFor(connection);
+                reconnectionManager = ReconnectionManager.getInstanceFor(connection);
+                reconnectionManager.enableAutomaticReconnection();
             }
             connection.login(username, password);
+            setAlias(username);
             sendAvailableStanza();
             if (!roster.isLoaded())
                 roster.reloadAndWait();
@@ -782,7 +836,6 @@ public class Connection {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
             }
         }
     }

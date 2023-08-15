@@ -7,7 +7,7 @@ Welcome to my first project for the course **Computer Networks** at Universidad 
 
 ## Project description
 
-This project consisted in an implementation of a client using the chat protocol XMPP. It required many options, which I will describe later. The client runs on a CLI interface, and connects to a server with domain **@alumchat.xyz**.
+This project consisted in an implementation of a client using the chat protocol XMPP. It required many options, which I will describe in the features section. The client runs on a CLI interface, and connects to a server with domain **@alumchat.xyz**.
 
 I used some tools when buidling the project:
 
@@ -16,9 +16,7 @@ I used some tools when buidling the project:
 * 🎮 Intellij
 * 🧠 Maven
 
-The programming language I chose was Java for many reasons, some of which I will discuss later. Smack is one of the best libraries out there for developing XMPP client applications. It is robust, flexible and very intuitive. Furthermore, I used Maven to build the project, because it is a tool that allows the creation and management of Java projects. It was very easy to create one. The only disadvantage was project compiling, because the commands needed are too verbose. Hence, I used Intellij, because it works too well with Maven, allowing me to run the project by just pressing a button.
-
-
+The programming language I chose was Java because of its relatively easy handling of async operations and for the library. Moreover, Smack is one of the best libraries out there for developing XMPP client applications. It is robust, flexible and very intuitive. Furthermore, I used Maven to build the project, because it is a tool that allows the creation and management of Java projects. It was very easy to create one. The only disadvantage was project compiling, because the commands needed are too verbose. Hence, I used Intellij, because it works too well with Maven, allowing me to run the project by just pressing a button.
 
 ## Features
 
@@ -32,4 +30,33 @@ The programming language I chose was Java for many reasons, some of which I will
 - [X] Add user to contacts: By providing a username and a domain, wheter it is alumchat or not, the client allows a user to add a contact to their roster.
 - [X] Show contact details: It is possible to see contact details with the client, by providing their username.
 - [X] Direct message: With the client a user can chat with another user, privately, just by providing their username. It does not necessarily has to be on the user's roster.
-- [X] Group chats: 
+- [X] Group chats: The client allows to create, join and chat in groupchats.
+- [X] Change status: With the client a user can change their status by selecting if he/she is only or not. The user can also select their mode and their status message.
+- [X] Send file: The client allows a user to send any file to another user.
+- [X] Log out: The user can close their session with the server.
+
+You can take a look of the javadoc which contains the documentation of the code here
+[Javadoc](./Javadoc/index.html)
+## Deployment
+
+To use the project you have to clone it first
+
+```bash
+  git clone https://github.com/Daniel14gonc/Proyecto1_redes.git
+```
+
+Now that you have the project on your computer you have two options. If you have the IDE **Intellij** installed, you can open the project there and run it. If you do not, then here are the steps to compile and run the project on CLI.
+
+First compile the project:
+
+```bash
+  mvn compile
+```
+
+Then execute the code:
+
+```bash
+  mvn exec:java -Dexec.mainClass=com.example.App
+```
+
+For this you should be using JDK 18 or above.

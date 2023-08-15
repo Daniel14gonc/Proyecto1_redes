@@ -70,13 +70,13 @@ public class ClientManager {
             case 7:
                 sendFile();
                 break;
-            case 10:
+            case 8:
                 logout();
                 break;
-            case 11:
+            case 9:
                 deleteAccount();
                 break;
-            case 12:
+            case 10:
                 loggedIn = false;
                 terminate = true;
                 logout();

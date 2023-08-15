@@ -72,9 +72,9 @@ public class Menu {
                 System.out.println("5. Chat grupal.");
                 System.out.println("6. Crea o modifica tu mensaje de presencia.");
                 System.out.println("7. Enviar archivo.");
-                System.out.println("10. Cerrar sesion.");
-                System.out.println("11. Eliminar cuenta.");
-                System.out.println("12. Salir");
+                System.out.println("8. Cerrar sesion.");
+                System.out.println("9. Eliminar cuenta.");
+                System.out.println("10. Salir");
                 System.out.print("> ");
                 option = Integer.parseInt(scanner.nextLine());
                 optionChosen = true;
@@ -200,7 +200,6 @@ public class Menu {
                 System.out.println("2. Invitar a alguien a un grupo.");
                 System.out.println("3. Unirte a un chat grupal.");
                 System.out.println("4. Hablar en un chat grupal.");
-                // System.out.println("5. Eliminar chat grupal.");
                 System.out.println("5. Salir.");
                 System.out.print("> ");
                 String contact = scanner.nextLine();

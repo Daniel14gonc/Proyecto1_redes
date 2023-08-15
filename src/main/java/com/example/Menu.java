@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- *
+ * This class is used to show user a menu in a CLI interface.
  * @author Daniel Gonzalez
  */
 
@@ -16,7 +16,7 @@ public class Menu {
 
     /**
      * Method to show initial menu of register, login and exit.
-     * @return void
+     * @return  it returns the option selected of the initial menu.
      */
     public int showInitialMenu() {
         boolean optionChosen = false;
@@ -40,7 +40,7 @@ public class Menu {
 
     /**
      * Method for asking credentials when login.
-     * @return void
+     * @return a list with username and password
      */
     public ArrayList<String> askCredentials() {
         System.out.println("\nIngresa tu nombre de usuario");
@@ -88,7 +88,7 @@ public class Menu {
 
     /**
      * Method to print the roster of the user.
-     * @return void
+     * @param roster the list of the contacts.
      */
     public void showRoster(String roster) {
         System.out.println(roster);
@@ -164,6 +164,10 @@ public class Menu {
         return data;
     }
 
+    /**
+     * Method to get the user to subscribe from terminal
+     * @return a string containing the user to subscribe.
+     */
     public String getUserToSubscribe() {
         System.out.println("Ingresa el usuario que quieres agregar a tus contactos (debes agregar el dominio, por ejemplo @alumchat.xyz).");
         System.out.print("> ");
@@ -171,6 +175,10 @@ public class Menu {
         return user;
     }
 
+    /**
+     * Method to get the contact which the user wants to see details
+     * @return a string with the username of the contact
+     */
     public String getContact() {
         System.out.println("Ingresa el usuario del contacto del que deseas ver los detalles.");
         System.out.print("> ");
@@ -178,6 +186,10 @@ public class Menu {
         return contact;
     }
 
+    /**
+     * Method to get the option of the action in groupchat.
+     * @return the number of option chosen.
+     */
     public int groupChat() {
         boolean wellResponseFormat = false;
         int response = 0;
@@ -188,8 +200,8 @@ public class Menu {
                 System.out.println("2. Invitar a alguien a un grupo.");
                 System.out.println("3. Unirte a un chat grupal.");
                 System.out.println("4. Hablar en un chat grupal.");
-                System.out.println("5. Eliminar chat grupal.");
-                System.out.println("6. Salir.");
+                // System.out.println("5. Eliminar chat grupal.");
+                System.out.println("5. Salir.");
                 System.out.print("> ");
                 String contact = scanner.nextLine();
                 response = Integer.parseInt(contact);
@@ -203,6 +215,10 @@ public class Menu {
         return response;
     }
 
+    /**
+     * Method to select a group and a user to invite to.
+     * @return a list of 2 elements containing the group name and the user.
+     */
     public ArrayList<String> inviteToGroupChat() {
         boolean infoWellSubmitted = false;
         String groupName = null;
@@ -226,6 +242,10 @@ public class Menu {
         return data;
     }
 
+    /**
+     * Method to get the groupname where user wants to chat.
+     * @return a string containing the groupname.
+     */
     public String getGroupNameToChat() {
         boolean infoWellSubmitted = false;
         String groupName = null;
@@ -238,18 +258,11 @@ public class Menu {
         return groupName;
     }
 
-    public String getGroupChatInfoDeletion() {
-        boolean infoWellSubmitted = false;
-        String groupName = null;
-        while (!infoWellSubmitted) {
-            System.out.println("Ingrese el nombre del grupo que desea borrar.");
-            System.out.print("> ");
-            groupName = scanner.nextLine();
-            infoWellSubmitted = true;
-        }
-        return groupName;
-    }
-
+    /**
+     * Method to get the information about the creation of groupchat.
+     * @param option it indicates whether we are creating a group or joining a group. Its values are 1 or anything else.
+     * @return a list of 2 elements with the new group name and the alias the user wants to have.
+     */
     public ArrayList<String> getGroupChatInfoCreation(int option) {
         boolean infoWellSubmitted = false;
         String groupName = null;

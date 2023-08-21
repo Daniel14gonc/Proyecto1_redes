@@ -11,12 +11,14 @@ This project consisted in an implementation of a client using the chat protocol 
 
 I used some tools when buidling the project:
 
-* 🍵 Java
-* 🔥 Smack
+* 🍵 Java (version 18.0.1 or above)
+* 🔥 Smack (version 4.4.0 or above)
 * 🎮 Intellij
 * 🧠 Maven
 
 The programming language I chose was Java because of its relatively easy handling of async operations and for the library. Moreover, Smack is one of the best libraries out there for developing XMPP client applications. It is robust, flexible and very intuitive. Furthermore, I used Maven to build the project, because it is a tool that allows the creation and management of Java projects. It was very easy to create one. The only disadvantage was project compiling, because the commands needed are too verbose. Hence, I used Intellij, because it works too well with Maven, allowing me to run the project by just pressing a button.
+
+You can find the project presentation at [Presentation](./Presentacion_proyecto.pdf)
 
 ## Features
 
@@ -37,7 +39,8 @@ The programming language I chose was Java because of its relatively easy handlin
 
 You can take a look of the javadoc which contains the documentation of the code here
 [Javadoc](./Javadoc/index.html)
-## Deployment
+
+## Run the project
 
 To use the project you have to clone it first
 
@@ -59,4 +62,5 @@ Then execute the code:
   mvn exec:java -Dexec.mainClass=com.example.App
 ```
 
-For this you should be using JDK 18 or above.
+You should be using JDK 18 or above.
+

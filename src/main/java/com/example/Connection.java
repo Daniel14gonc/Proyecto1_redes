@@ -194,6 +194,7 @@ public class Connection {
      * This method creates a listener to identify when a user has changed their status.
      */
     private void createRosterListener() {
+        // The boilerplate of the listener was suggested by ChatGPT.
         roster.addRosterListener(new RosterListener() {
             @Override
             public void entriesAdded(Collection<Jid> addresses) {
@@ -248,6 +249,7 @@ public class Connection {
      * This method handles events of errors in the connection
      */
     private void createConnectionErrorListener() {
+        // The boilerplate of the listener was suggested by ChatGPT.
         connection.addConnectionListener(new ConnectionListener() {
             @Override
             public void connected(XMPPConnection connection) {
@@ -441,6 +443,7 @@ public class Connection {
      * @return string containing the result of the roster.
      */
     public String getRoster() {
+        // ChatGPT showed me a basic roster traversal which I built upon.
         try {
             roster = Roster.getInstanceFor(connection);
             roster.reloadAndWait();
@@ -640,6 +643,7 @@ public class Connection {
      * @param filePath
      */
     private String convertToBase64 (String filePath) {
+        // ChatGPT showed me how to convert a file to base64.
         try {
             byte[] fileBytes = Files.readAllBytes(Paths.get(filePath));
             return Base64.getEncoder().encodeToString(fileBytes);
@@ -980,6 +984,8 @@ public class Connection {
          */
         @Override
         public void newIncomingMessage(EntityBareJid entityBareJid, Message message, Chat chat) {
+            // ChatGPT showed me a basic usage of the listener. Albeit he showed me a slightly different listener, deprecated actually,
+            // I managed to build this one.
             if (message.getBody().length() > 4 && message.getBody().substring(0, 4).equals("file")) {
                 if (isFileFormatCorrect(message.getBody())) {
                     System.out.println(yellow + "File received from: " + chat.getXmppAddressOfChatPartner().toString() + reset);
